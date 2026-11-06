@@ -1,0 +1,40 @@
+# QLoRA on Qwen2.5-7B-Instruct. Fits a single 24 GB GPU (L4 / A10G); also runs on
+# an A100 40 GB with a larger batch. On a 16 GB T4 drop max_seq_len to 1024.
+base_model: Qwen/Qwen2.5-7B-Instruct
+output_dir: outputs/qwen7b-domain-qlora
+
+data:
+  train_file: data/train.jsonl
+  eval_file: data/val.jsonl
+  max_seq_len: 2048
+  system_prompt: >-
+    You are a domain expert. Answer accurately and concisely. If the question
+    can't be answered from what you know, say so instead of guessing.
+
+quantization:            # 4-bit NF4 base weights, LoRA adapters trained in 16-bit
+  load_in_4bit: true
+  quant_type: nf4
+  double_quant: true
+  compute_dtype: bfloat16   # use float16 on T4/V100 (no bf16 support)
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 3
+  learning_rate: 2.0e-4
+  lr_scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 4
+  grad_accum_steps: 4          # effective batch 16
+  weight_decay: 0.0
+  max_grad_norm: 0.3
+  gradient_checkpointing: true
+  eval_steps: 50
+  save_steps: 50
+  logging_steps: 10
+  seed: 42
+  early_stopping_patience: 3   # stop if eval loss doesn't improve for 3 evals

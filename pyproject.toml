@@ -1,0 +1,9 @@
+[project]
+name = "llm-finetune-serving"
+version = "1.0.0"
+description = "QLoRA fine-tuning of a 7B model with blinded rubric evaluation, served with vLLM + FastAPI."
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
